@@ -1,128 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Geolocation Test Page</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    h1 {
-      color: #333;
-    }
-    .log {
-      margin-top: 20px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      height: 200px;
-      overflow-y: scroll;
-    }
-    button {
-      padding: 10px 20px;
-      margin-top: 10px;
-      cursor: pointer;
-    }
-    .success {
-      color: green;
-    }
-    .error {
-      color: red;
-    }
-  </style>
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Geolocation Test Page</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      h1 {
+        color: #333;
+      }
+      .log {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        height: 200px;
+        overflow-y: scroll;
+      }
+      button {
+        padding: 10px 20px;
+        margin-top: 10px;
+        cursor: pointer;
+      }
+      .success {
+        color: green;
+      }
+      .error {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Geolocation Edge Case Testing</h1>
+    <p>
+      Click the button below to test location access under various conditions.
+      Results will be logged below.
+    </p>
 
-  <h1>Geolocation Edge Case Testing</h1>
-  <p>Click the button below to test location access under various conditions. Results will be logged below.</p>
+    <button onclick="testGeolocation()">Test Location Access</button>
 
-  <button onclick="testGeolocation()">Test Location Access</button>
+    <div class="log" id="logOutput">
+      <!-- Logs will appear here -->
+    </div>
 
-  <div class="log" id="logOutput">
-    <!-- Logs will appear here -->
-  </div>
+    <script>
+      let currentPosition = null;
+      if (!navigator.geolocation) {
+        logMessage("Geolocation is not supported by your browser", "error");
+      }
+      if (!navigator.permissions) {
+        logMessage("Permissions API is not supported by your browser", "error");
+      }
+      if (currentPosition) {
+        logMessage("Current position is cached");
+      }
 
-  <script>
-    let currentPosition = null;
+      // Shared function: Get current position with caching
+      function getCurrentPosition(options) {
+        const { timeout } = options;
+        return new Promise((resolve, reject) => {
+          if (currentPosition) {
+            logMessage("Using cached position...", "info");
+            return resolve(currentPosition);
+          }
+          return navigator.geolocation.getCurrentPosition(
+            (position) => {
+              currentPosition = position;
+              logMessage("Location retrieved successfully!", "success");
+              return resolve(position);
+            },
+            (error) => {
+              logMessage(
+                "Error getting position: " +
+                  error.message +
+                  " error" +
+                  " code: " +
+                  error.code,
+                "error"
+              );
+              return reject(error);
+            },
+            { timeout }
+          );
+        });
+      }
 
-    // Shared function: Get current position with caching
-    function getCurrentPosition(options) {
-      const { timeout } = options;
-      return new Promise((resolve, reject) => {
-        if (currentPosition) {
-          logMessage('Using cached position...', 'info');
-          return resolve(currentPosition);
+      // Shared function: Get user location with geocoding lookup (mocked)
+      async function getUserLocation(onLocationAccessSuccess) {
+        try {
+          const { coords } = await getCurrentPosition({ timeout: 10 * 1 });
+          onLocationAccessSuccess();
+
+          // Mocked address lookup (replace with actual SDK)
+          const address = await lookupGeoCoordsThroughSdk(coords);
+
+          return {
+            longitude: coords.longitude.toString(),
+            latitude: coords.latitude.toString(),
+            address,
+          };
+        } catch (error) {
+          logMessage(
+            "Failed to get user location: " +
+              error.message +
+              " error" +
+              " code: " +
+              error.code,
+            "error"
+          );
+          return null;
         }
-        return navigator.geolocation.getCurrentPosition(
-          (position) => {
-            currentPosition = position;
-            logMessage('Location retrieved successfully!', 'success');
-            return resolve(position);
-          },
-          (error) => {
-            logMessage('Error getting position: ' + error.message, 'error');
-            return reject(error);
-          },
-          { timeout }
-        );
-      });
-    }
-
-    // Shared function: Get user location with geocoding lookup (mocked)
-    async function getUserLocation(onLocationAccessSuccess) {
-      try {
-        const { coords } = await getCurrentPosition({ timeout: 10 * 1000 });
-        onLocationAccessSuccess();
-
-        // Mocked address lookup (replace with actual SDK)
-        const address = await lookupGeoCoordsThroughSdk(coords);
-
-        return {
-          longitude: coords.longitude.toString(),
-          latitude: coords.latitude.toString(),
-          address,
-        };
-      } catch (error) {
-        logMessage('Failed to get user location: ' + error.message, 'error');
-        return null;
       }
-    }
 
-    // Mocked SDK function for geocoding lookup
-    async function lookupGeoCoordsThroughSdk(coords) {
-      logMessage('Looking up address for coordinates...', 'info');
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(`Mocked address for (${coords.latitude}, ${coords.longitude})`);
-        }, 2000); // Simulate async delay
-      });
-    }
-
-    // Test the geolocation with logging
-    async function testGeolocation() {
-      logMessage('Starting geolocation test...', 'info');
-      
-      const result = await getUserLocation(() => {
-        logMessage('Location access successful!', 'success');
-      });
-
-      if (result) {
-        logMessage(`Location: ${result.latitude}, ${result.longitude}`, 'success');
-        logMessage(`Address: ${result.address}`, 'success');
+      // Mocked SDK function for geocoding lookup
+      async function lookupGeoCoordsThroughSdk(coords) {
+        logMessage("Looking up address for coordinates...", "info");
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(
+              `Mocked address for (${coords.latitude}, ${coords.longitude})`
+            );
+          }, 2000); // Simulate async delay
+        });
       }
-    }
 
-    // Utility to log messages to the log box
-    function logMessage(message, type) {
-      const logBox = document.getElementById('logOutput');
-      const msgElement = document.createElement('div');
-      msgElement.textContent = message;
-      msgElement.classList.add(type);
-      logBox.appendChild(msgElement);
-      logBox.scrollTop = logBox.scrollHeight;
-    }
-  </script>
+      // Test the geolocation with logging
+      async function testGeolocation() {
+        logMessage("Starting geolocation test...", "info");
 
-</body>
+        try {
+          const result = await getUserLocation(() => {
+            logMessage("Location access successful!", "success");
+          });
+
+          if (result) {
+            logMessage(
+              `Location: ${result.latitude}, ${result.longitude}`,
+              "success"
+            );
+            logMessage(`Address: ${result.address}`, "success");
+          }
+        } catch (error) {
+          logMessage(
+            "Failed to get user location: " +
+              error.message +
+              " error" +
+              " code: " +
+              error.code,
+            "error"
+          );
+        }
+      }
+
+      // Utility to log messages to the log box
+      function logMessage(message, type) {
+        const logBox = document.getElementById("logOutput");
+        const msgElement = document.createElement("div");
+        msgElement.textContent = message;
+        msgElement.classList.add(type);
+        logBox.appendChild(msgElement);
+        logBox.scrollTop = logBox.scrollHeight;
+      }
+    </script>
+  </body>
 </html>
