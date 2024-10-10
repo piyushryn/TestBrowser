@@ -90,7 +90,7 @@
       // Shared function: Get user location with geocoding lookup (mocked)
       async function getUserLocation(onLocationAccessSuccess) {
         try {
-          const { coords } = await getCurrentPosition({ timeout: 10 * 1 });
+          const { coords } = await getCurrentPosition({ timeout: 10 * 1000 });
           onLocationAccessSuccess();
 
           // Mocked address lookup (replace with actual SDK)
