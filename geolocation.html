@@ -30,6 +30,9 @@
       .error {
         color: red;
       }
+      .info {
+        color: blue;
+      }
     </style>
   </head>
   <body>
@@ -61,25 +64,28 @@
       function getCurrentPosition(options) {
         const { timeout } = options;
         return new Promise((resolve, reject) => {
+          const startTime = performance.now(); // Start timing
           if (currentPosition) {
             logMessage("Using cached position...", "info");
+            logTimeTaken(startTime); // Log time for cached position
             return resolve(currentPosition);
           }
           return navigator.geolocation.getCurrentPosition(
             (position) => {
               currentPosition = position;
               logMessage("Location retrieved successfully!", "success");
+              logTimeTaken(startTime); // Log time for new position retrieval
               return resolve(position);
             },
             (error) => {
               logMessage(
                 "Error getting position: " +
                   error.message +
-                  " error" +
-                  " code: " +
+                  " error code: " +
                   error.code,
                 "error"
               );
+              logTimeTaken(startTime); // Log time for error
               return reject(error);
             },
             { timeout }
@@ -105,8 +111,7 @@
           logMessage(
             "Failed to get user location: " +
               error.message +
-              " error" +
-              " code: " +
+              " error code: " +
               error.code,
             "error"
           );
@@ -146,8 +151,7 @@
           logMessage(
             "Failed to get user location: " +
               error.message +
-              " error" +
-              " code: " +
+              " error code: " +
               error.code,
             "error"
           );
@@ -162,6 +166,13 @@
         msgElement.classList.add(type);
         logBox.appendChild(msgElement);
         logBox.scrollTop = logBox.scrollHeight;
+      }
+
+      // Utility to log the time taken
+      function logTimeTaken(startTime) {
+        const endTime = performance.now();
+        const timeTaken = (endTime - startTime).toFixed(2);
+        logMessage(`Time taken: ${timeTaken} ms`, "info");
       }
     </script>
   </body>
